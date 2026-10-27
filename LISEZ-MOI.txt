@@ -1,0 +1,37 @@
+GESTION DES NOTES - application installable (hors ligne) avec licence par codes signés
+
+CONTENU (ne rien renommer)
+  index.html, manifest.webmanifest, sw.js, icon-192.png, icon-512.png, icon-maskable-512.png
+  + VOTRE fichier cle-publique.js (à créer avec GENERATEUR_DE_CODES.html, étape 1)
+
+1) CRÉER VOS CLÉS (une seule fois, sur votre téléphone)
+   - Ouvrez GENERATEUR_DE_CODES.html dans Chrome. Ne le mettez JAMAIS en ligne et ne le partagez pas.
+   - Touchez "Créer mes clés".
+   - Touchez "Télécharger cle-publique.js". Ce fichier peut être public.
+   - Sauvegardez la CLÉ SECRÈTE affichée (par exemple en vous l'envoyant en message privé).
+     Si vous la perdez : nouvelles clés, nouveau cle-publique.js, et les anciens codes ne marchent plus.
+
+2) METTRE EN LIGNE (une seule fois)
+   Envoyez sur GitHub Pages (dépôt public) : index.html, manifest.webmanifest, sw.js, les 3 icônes
+   ET cle-publique.js, tous au même niveau. Ne mettez PAS GENERATEUR_DE_CODES.html.
+
+3) INSTALLER SUR CHAQUE TÉLÉPHONE (avec Internet, une seule fois)
+   Ouvrez l'adresse https:// dans Chrome > menu > "Installer l'application".
+
+4) PROLONGER UNE LICENCE
+   - L'utilisateur ouvre Élèves > Licence (ou l'écran de blocage) et vous envoie le "Code de cet appareil".
+   - Vous ouvrez le générateur, collez ce code, choisissez la date de fin, touchez "Créer le code".
+   - Vous lui envoyez le code. Il le colle dans l'application et touche "Prolonger" / "Débloquer".
+   Le code ne marche que sur CET appareil. Si l'utilisateur efface les données de l'application,
+   son code d'appareil change : il vous en envoie un nouveau.
+
+5) SAUVEGARDE DES NOTES
+   Page d'accueil : "Enregistrer une sauvegarde" / "Restaurer une sauvegarde".
+   La restauration ne modifie jamais la licence de l'appareil.
+
+6) METTRE À JOUR L'APPLICATION
+   Remplacez les fichiers sur GitHub, ouvrez l'application avec Internet, fermez-la complètement, rouvrez-la.
+
+LIMITE : une application hors ligne ne peut jamais être protégée à 100 %. Ce système empêche de fabriquer
+un code sans votre clé secrète et de réutiliser un code sur un autre appareil. Une personne très habile
+pourrait toujours modifier sa propre copie du code.
