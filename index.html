@@ -953,8 +953,8 @@ function buildBilan(K){
     doc.setDrawColor(190);doc.setLineWidth(.2);doc.line(M,y+rh,M+tw,y+rh);y+=rh;
   });
   bg();doc.setTextColor(20);
-  y+=5;if(y>150){doc.addPage();y=25}
-  doc.setTextColor(20);y+=9;
+  y+=5;if(y>168){doc.addPage();y=25}
+  doc.setTextColor(20);
   doc.setFont('helvetica','normal');doc.setFontSize(12);doc.text(pdfText(faitLe()),W-M,y,{align:'right'});y+=9;
   var dsx=S.school.directorSex==='F'?'La Directrice':'Le Directeur';
   [['Le conseil des professeurs',''],[dsx,S.school.director],["Décision du Chef de Circonscription d'Éducation de Base",'']].forEach(function(a,i){
@@ -975,7 +975,7 @@ function buildRank(K){
   var mw=subs.map(function(s){return Math.max.apply(null,dsh(s.name).split(' ').concat(['/'+s.bareme]).map(function(t){return doc.getTextWidth(t)}))+2.5}),NN=mw.reduce(function(a,b){return a+b},0);
   var sws=mw.map(function(w){return NN<=avail?w+(avail-NN)/Math.max(1,subs.length):w*avail/NN});
   var cols=[['Rang',fx[0],'c'],['Élève',fx[1],'l']].concat(subs.map(function(s,i){return [s.name,sws[i],'c',s]})).concat([['Total',fx[2],'c'],['Moyenne',fx[3],'c'],['Appréciation',fx[4],'l']]);
-  var tw=cols.reduce(function(a,c){return a+c[1]},0),y=0,rh=7,lh=5.2,gridTop=0;
+  var tw=cols.reduce(function(a,c){return a+c[1]},0),y=0,rh=5.6,lh=5.2,gridTop=0;
   doc.setFont('helvetica','bold');doc.setFontSize(12);
   doc.setFont('helvetica','normal');
   var lines=cols.map(function(c){return c[3]?wrapN(doc,dsh(c[0]),c[1]-1.5).slice(0,3).map(function(l){return l.replace(/- /g,'-')}).concat(['/'+c[3].bareme]):[pdfText(c[0])]});
