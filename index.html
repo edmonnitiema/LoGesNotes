@@ -580,7 +580,7 @@ function viewResultats(){
   if(!S.students.length||!S.subjects.length) return needSetup();
   var C=compute(ui.rp), st=C.stats;
   var rows=C.rows.slice().sort(function(a,b){return ((a.rank==null)-(b.rank==null))||(a.rank-b.rank)||a.s.name.localeCompare(b.s.name,'fr')});
-  var h='<section><h2>Résultats</h2>'+periodSeg(ui.rp,true,'rp')+'<p class="hint">Les informations des filles sont en rouge.</p><p class="hint"><b>Effectif :</b> <b style="color:var(--red)">F : '+effData().f+'</b>&emsp;<b>G : '+effData().m+'</b>&emsp;<b>T : '+effData().t+'</b></p>';
+  var h='<section><h2>Résultats</h2>'+periodSeg(ui.rp,true,'rp')+'<p class="hint">Les informations des filles sont en rouge.</p>'+effBlockHtml(ui.rp)+'';
   h+='<dl class="strip"><div><dt>Élèves</dt><dd>'+st.n+'</dd></div><div><dt>Moyenne de la classe</dt><dd>'+f2(st.mean)+'</dd></div><div><dt>Meilleure</dt><dd>'+f2(st.max)+'</dd></div><div><dt>Plus faible</dt><dd>'+f2(st.min)+'</dd></div><div><dt>Réussite</dt><dd>'+(st.pass==null?'–':Math.round(st.pass*100)+' %')+'</dd></div></dl>';
   h+='<div class="tbl-wrap"><table><thead><tr><th>Rang et élève</th>'+S.subjects.map(function(s){return '<th>'+esc(s.name)+'<small>/'+s.bareme+'</small></th>'}).join('')+'<th>Total<small>points</small></th><th>Moyenne<small>/'+C.outOf+'</small></th><th>Appréciation</th></tr></thead><tbody>';
   rows.forEach(function(r){
@@ -599,7 +599,11 @@ function viewResultats(){
 function sheetHtml(r,C,p){
   var sc=S.school;
   var h='<article class="sheet'+(r.s.sex==='F'?' girl':'')+'"><div class="tophead"><div><p>'+esc(CIRC)+'</p><p>*****</p><p>'+esc(schoolLine(sc.name))+'</p><p>*****</p><p>CLASSE : '+esc(sc.classe||'........')+'</p></div><div><p>BURKINA FASO</p><p>La Patrie ou la Mort, nous Vaincrons</p><p>Année scolaire : '+esc(sc.year)+'</p></div></div><div class="sheet-head"><p class="t">BULLETIN DE NOTES</p><p class="p">'+TL[p]+'</p></div>'+
-   '<dl class="ident"><div class="wide"><dt>Élève</dt><dd>'+esc(r.s.name)+'</dd></div><div><dt>Classe</dt><dd>'+esc(sc.classe||'–')+'</dd></div><div><dt>Effectif</dt><dd>'+S.students.length+'</dd></div><div><dt>Sexe</dt><dd>'+sexLabel(r.s.sex)+'</dd></div><div><dt>Âge</dt><dd>'+(isNum(r.s.age)?r.s.age+' ans':'–')+'</dd></div></dl>'+
+   '<dl class="ident"><div style="grid-column:1;grid-row:1"><dt>Élève</dt><dd>'+esc(r.s.name)+'</dd></div>'+
+   '<div style="grid-column:2;grid-row:1"><dt>Classe</dt><dd>'+esc(sc.classe||'–')+'</dd></div>'+
+   '<div style="grid-column:1;grid-row:2"><dt>Sexe</dt><dd>'+sexLabel(r.s.sex)+'</dd></div>'+
+   '<div style="grid-column:1;grid-row:3"><dt>Âge</dt><dd>'+(isNum(r.s.age)?r.s.age+' ans':'–')+'</dd></div>'+
+   effBits(p).map(function(b,i){return '<div style="grid-column:2;grid-row:'+(i+2)+'"><dt>'+b[0]+'</dt><dd style="color:var(--ink);font-size:.8125rem">'+fgtHtml(b[1])+'</dd></div>'}).join('')+'</dl>'+
    '<div class="tbl-wrap"><table><thead><tr><th>Discipline</th><th>Note</th><th>Appréciation</th></tr></thead><tbody>'+
    r.items.map(function(it){return '<tr><td>'+esc(it.sub.name)+'</td><td'+(it.note!=null&&it.note<it.sub.bareme/2?' class="low"':'')+'>'+(it.note==null?'–':fn(it.note)+' / '+it.sub.bareme)+'</td><td class="ap">'+(it.note==null?'–':appreciation(it.note/it.sub.bareme*10,10))+'</td></tr>'}).join('')+
    '</tbody><tfoot><tr><td>Total</td><td>'+fn(r.total)+' / '+fn(r.max)+'</td><td class="ap">'+appreciation(r.avg,C.outOf)+'</td></tr></tfoot></table></div>'+
@@ -618,6 +622,15 @@ function viewAccueil(){
   return h;
 }
 function effData(){var f=0,m=0;S.students.forEach(function(x){if(x.sex==='F')f++;else if(x.sex==='M')m++});return {f:f,m:m,t:S.students.length}}
+function effBits(p){var e=effData(),g=successStats(p).rows.slice(-1)[0].o;return [['Effectif',[e.f,e.m,e.t]],['Ont composé',[g.F[0],g.M[0],g.T[0]]],['Ont eu la moyenne',[g.F[1],g.M[1],g.T[1]]]]}
+function fgtHtml(a){return '<span style="color:var(--red)">F : '+a[0]+'</span>&emsp;G : '+a[1]+'&emsp;T : '+a[2]}
+function effBlockHtml(p){return effBits(p).map(function(b){return '<p class="hint"><b>'+b[0]+' :</b> '+fgtHtml(b[1])+'</p>'}).join('')}
+function drawFGT(doc,x,y,label,a){
+  doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(20);
+  var t=pdfText(label+' : ');doc.text(t,x,y);x+=doc.getTextWidth(t);
+  [['F : '+a[0],true],['G : '+a[1],false],['T : '+a[2],false]].forEach(function(q){doc.setFont('helvetica','normal');if(q[1])doc.setTextColor(196,48,43);else doc.setTextColor(20);doc.text(q[0],x,y);x+=doc.getTextWidth(q[0])+5});
+  doc.setTextColor(20);
+}
 function effText(){var e=effData();return '<b style="color:var(--red)">Filles : '+e.f+'</b> · <b>Garçons : '+e.m+'</b> · <b>Total : '+e.t+'</b>'}
 function passVal(){var p=Number(String(S.school.passAvg).replace(',','.'));return isFinite(p)?p:5}
 function propText(avg,sex){return avg==null?'–':avg>=passVal()?(sex==='F'?'Admise en classe supérieure':sex==='M'?'Admis en classe supérieure':'Admis(e) en classe supérieure'):'Redouble sa classe'}
@@ -726,10 +739,13 @@ function drawTop(doc,W,M,maxW,eff){
   L.forEach(function(t,i){doc.text(t,cx,y+i*lh,{align:'center'})});
   var yEnd=y+(L.length-1)*lh;
   if(eff){
-    var e=effData(),seg=[[(typeof eff==='string'?eff:'Effectif')+' : ',false],['F : '+e.f,true],['    ',false],['G : '+e.m,false],['    ',false],['T : '+e.t,false]],tw=0;
-    seg.forEach(function(a){tw+=doc.getTextWidth(pdfText(a[0]))});
-    var sx=cx-tw/2;yEnd+=lh;
-    seg.forEach(function(a){var t=pdfText(a[0]);if(a[1])doc.setTextColor(196,48,43);else doc.setTextColor(20);doc.text(t,sx,yEnd);sx+=doc.getTextWidth(t)});
+    var items=Array.isArray(eff)?eff:eff===true?effBits(ui.rp):[[eff,[effData().f,effData().m,effData().t]]];
+    items.forEach(function(it){
+      var seg=[[it[0]+' : ',false],['F : '+it[1][0],true],['    ',false],['G : '+it[1][1],false],['    ',false],['T : '+it[1][2],false]],tw=0;
+      seg.forEach(function(a){tw+=doc.getTextWidth(pdfText(a[0]))});
+      var sx=cx-tw/2;yEnd+=lh;
+      seg.forEach(function(a){var t=pdfText(a[0]);if(a[1])doc.setTextColor(196,48,43);else doc.setTextColor(20);doc.text(t,sx,yEnd);sx+=doc.getTextWidth(t)});
+    });
     doc.setTextColor(20);
   }
   var R=['BURKINA FASO'].concat(wrapT(doc,'La Patrie ou la Mort, nous Vaincrons',rw),[pdfText('Année scolaire : '+sc.year)]);
@@ -743,12 +759,15 @@ function drawBulletin(doc,r,C,p){
   y+=8;doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text('BULLETIN DE NOTES',W/2,y,{align:'center'});
   y+=6;doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.text(pdfText(TL[p]),W/2,y,{align:'center'});
   y+=4;doc.setDrawColor(40);doc.setLineWidth(.5);doc.line(M,y,W-M,y);
-  var kv=function(x,yy,k,v,red){doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(k+' ',x,yy);var w=doc.getTextWidth(k+' ');doc.setFont('helvetica','normal');tc(red&&girl);doc.text(fit(doc,pdfText(v),W-M-x-w),x+w,yy);tc(false)};
-  y+=9;kv(M,y,'Élève :',r.s.name,true);kv(135,y,'Classe :',sc.classe||'-');
-  y+=7;kv(M,y,'Sexe :',sexLabel(r.s.sex),true);kv(80,y,'Âge :',isNum(r.s.age)?r.s.age+' ans':'-',true);kv(135,y,'Effectif :',String(S.students.length));
+  var kv=function(x,yy,k,v,red,mw){doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(k+' ',x,yy);var w=doc.getTextWidth(k+' ');doc.setFont('helvetica','normal');tc(red&&girl);doc.text(fit(doc,pdfText(v),(mw||(W-M-x))-w),x+w,yy);tc(false)};
+  var RX=112,eb=effBits(p);
+  y+=9;kv(M,y,'Élève :',r.s.name,true,RX-M-4);kv(RX,y,'Classe :',sc.classe||'-');
+  y+=7;kv(M,y,'Sexe :',sexLabel(r.s.sex),true);drawFGT(doc,RX,y,eb[0][0],eb[0][1]);
+  y+=7;kv(M,y,'Âge :',isNum(r.s.age)?r.s.age+' ans':'-',true);drawFGT(doc,RX,y,eb[1][0],eb[1][1]);
+  y+=7;drawFGT(doc,RX,y,eb[2][0],eb[2][1]);
   y+=7;
   var cols=[['Discipline',68,'l'],['Note',30,'c'],['Sur',30,'c'],['Appréciation',52,'l']];
-  var n=r.items.length, rh=Math.max(6.2,Math.min(8,94/(n+2))), fs=12;
+  var n=r.items.length, rh=Math.max(5.8,Math.min(8,70/(n+2))), fs=12;
   var drawRow=function(cells,bold,fill){
     var x=M;
     if(fill){doc.setFillColor(fill[0],fill[1],fill[2]);doc.rect(M,y,180,rh,'F')}
