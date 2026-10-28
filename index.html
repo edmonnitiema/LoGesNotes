@@ -444,7 +444,7 @@ function appreciation(avg,outOf){
 }
 function rankStr(r){return r.rank==null?'–':(r.rank===1?'1er':r.rank+'e')+(r.tie?' ex æquo':'')}
 function sortedStudents(){return S.students.slice().sort(function(a,b){return a.name.localeCompare(b.name,'fr')})}
-function schoolLine(n){n=String(n||'').trim();if(!n) return 'ÉCOLE DE : ........';return /^[ée]cole\b/i.test(n)?n:'ÉCOLE DE : '+n}
+function schoolLine(n){n=String(n||'').trim().replace(/^[ée]cole\s*(de\s*)?:?\s*/i,'');return 'ÉCOLE : '+(n||'........')}
 function successStats(p){
   var C=compute(p),mk=function(){return {F:[0,0],M:[0,0],T:[0,0]}};
   var add=function(o,sex,ok){var a=[o.T];if(sex==='F')a.push(o.F);else if(sex==='M')a.push(o.M);a.forEach(function(c){c[0]++;if(ok)c[1]++})};
@@ -751,7 +751,7 @@ function wrapN(doc,t,w){var out=[];wrapT(doc,t,w).forEach(function(l){while(doc.
 function drawTop(doc,W,M,maxW,eff){
   var sc=S.school,lh=5.3,y=12,cx=M+maxW/2,rw=80,rx=W-M-rw/2;
   doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(12);
-  var L=wrapT(doc,pdfText(CIRC),maxW).concat(['*****',fit(doc,pdfText(schoolLine(sc.name)),maxW),'*****','CLASSE : '+pdfText(sc.classe||'........')]);
+  var L=wrapT(doc,pdfText(CIRC),maxW).concat(['*****',fit(doc,pdfText(schoolLine(sc.name).toUpperCase()),maxW),'*****','CLASSE : '+pdfText(sc.classe||'........')]);
   L.forEach(function(t,i){doc.text(t,cx,y+i*lh,{align:'center'})});
   var yEnd=y+(L.length-1)*lh;
   if(eff){
