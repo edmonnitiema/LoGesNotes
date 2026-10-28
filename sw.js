@@ -1,5 +1,5 @@
 /* GESTION DES NOTES : fonctionnement hors ligne */
-var CACHE='gestion-notes-v4';
+var CACHE='gestion-notes-v5';
 var FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./cle-publique.js'];
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return Promise.all(FILES.map(function(f){return c.add(f).catch(function(){})}))}).then(function(){return self.skipWaiting()}));

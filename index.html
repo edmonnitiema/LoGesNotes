@@ -217,6 +217,7 @@ tr.girl input,tr.girl select{color:var(--red)}
 .ident dt{font-size:.6875rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2); font-weight:700}
 .ident dd{margin:0; font-weight:700}
 .ident .wide{grid-column:1/-1}
+.efft{border:0;border-collapse:collapse;width:auto;margin:8px 0;text-align:left}.efft th,.efft td{border:0;padding:2px 14px 2px 0;text-align:left;vertical-align:top;background:none;font-size:.8125rem;white-space:nowrap}.efft th{font-weight:700;color:var(--ink)}
 .sheet .tbl-wrap{border-radius:4px}
 .sheet th,.sheet td{padding:6px 5px; white-space:normal; font-size:.8125rem}
 .sheet td:nth-child(2){white-space:nowrap}
@@ -603,7 +604,7 @@ function sheetHtml(r,C,p){
    '<div style="grid-column:2;grid-row:1"><dt>Classe</dt><dd>'+esc(sc.classe||'–')+'</dd></div>'+
    '<div style="grid-column:1;grid-row:2"><dt>Sexe</dt><dd>'+sexLabel(r.s.sex)+'</dd></div>'+
    '<div style="grid-column:1;grid-row:3"><dt>Âge</dt><dd>'+(isNum(r.s.age)?r.s.age+' ans':'–')+'</dd></div>'+
-   effBits(p).map(function(b,i){return '<div style="grid-column:2;grid-row:'+(i+2)+'"><dt>'+b[0]+'</dt><dd style="color:var(--ink);font-size:.8125rem">'+fgtHtml(b[1])+'</dd></div>'}).join('')+'</dl>'+
+   '</dl>'+effBlockHtml(p)+
    '<div class="tbl-wrap"><table><thead><tr><th>Discipline</th><th>Note</th><th>Appréciation</th></tr></thead><tbody>'+
    r.items.map(function(it){return '<tr><td>'+esc(it.sub.name)+'</td><td'+(it.note!=null&&it.note<it.sub.bareme/2?' class="low"':'')+'>'+(it.note==null?'–':fn(it.note)+' / '+it.sub.bareme)+'</td><td class="ap">'+(it.note==null?'–':appreciation(it.note/it.sub.bareme*10,10))+'</td></tr>'}).join('')+
    '</tbody><tfoot><tr><td>Total</td><td>'+fn(r.total)+' / '+fn(r.max)+'</td><td class="ap">'+appreciation(r.avg,C.outOf)+'</td></tr></tfoot></table></div>'+
@@ -624,7 +625,17 @@ function viewAccueil(){
 function effData(){var f=0,m=0;S.students.forEach(function(x){if(x.sex==='F')f++;else if(x.sex==='M')m++});return {f:f,m:m,t:S.students.length}}
 function effBits(p){var e=effData(),g=successStats(p).rows.slice(-1)[0].o;return [['Effectif',[e.f,e.m,e.t]],['Ont composé',[g.F[0],g.M[0],g.T[0]]],['Ont eu la moyenne',[g.F[1],g.M[1],g.T[1]]]]}
 function fgtHtml(a){return '<span style="color:var(--red)">F : '+a[0]+'</span>&emsp;G : '+a[1]+'&emsp;T : '+a[2]}
-function effBlockHtml(p){return effBits(p).map(function(b){return '<p class="hint"><b>'+b[0]+' :</b> '+fgtHtml(b[1])+'</p>'}).join('')}
+function effBlockHtml(p){return '<table class="efft"><tbody>'+effBits(p).map(function(b){return '<tr><th>'+b[0]+'</th><td>'+fgtHtml(b[1])+'</td></tr>'}).join('')+'</tbody></table>'}
+function drawEffTable(doc,x,y,items,lh,fs){
+  fs=fs||12;doc.setFontSize(fs);doc.setFont('helvetica','bold');
+  var cw=0;items.forEach(function(it){cw=Math.max(cw,doc.getTextWidth(pdfText(it[0])))});cw+=4;
+  items.forEach(function(it,i){
+    var yy=y+i*lh;doc.setFont('helvetica','bold');doc.setFontSize(fs);doc.setTextColor(20);doc.text(pdfText(it[0]),x,yy);
+    var sx=x+cw;doc.setFont('helvetica','normal');
+    [['F : '+it[1][0],true],['G : '+it[1][1],false],['T : '+it[1][2],false]].forEach(function(q){if(q[1])doc.setTextColor(196,48,43);else doc.setTextColor(20);doc.text(q[0],sx,yy);sx+=doc.getTextWidth(q[0])+4});
+  });
+  doc.setTextColor(20);return y+(items.length-1)*lh;
+}
 function drawFGT(doc,x,y,label,a){
   doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(20);
   var t=pdfText(label+' : ');doc.text(t,x,y);x+=doc.getTextWidth(t);
@@ -722,6 +733,11 @@ MiniPDF.prototype={
 };
 function canPdf(){return true}
 function fit(doc,t,w){t=String(t);if(doc.getTextWidth(t)<=w) return t;while(t.length>1&&doc.getTextWidth(t+'.')>w) t=t.slice(0,-1);return t+'.'}
+function pdfName(page,withPeriod){
+  var c=function(t){return String(t||'').replace(/^\s*[ÉEée]cole\s*(de\s*)?:?\s*/i,'').replace(/[\\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim().toUpperCase()};
+  var per=withPeriod?(ui.rp==='A'?'ANNÉE':'T'+ui.rp):'';
+  return [c(S.school.name)||'ÉCOLE',c(S.school.classe)||'CLASSE',page].join('_')+(per?' '+per:'')+'.pdf';
+}
 function pdfText(s){return String(s).replace(/[–—]/g,'-').replace(/[’‘]/g,"'").replace(/×/g,'x')}
 function wrapT(doc,t,w){var out=[],cur='';t.split(' ').forEach(function(wd){var n=cur?cur+' '+wd:wd;if(cur&&doc.getTextWidth(n)>w){out.push(cur);cur=wd}else cur=n});if(cur)out.push(cur);return out}
 function pdfGrid(doc,M,widths,top,bottom,partial,hdrBottom){
@@ -740,13 +756,7 @@ function drawTop(doc,W,M,maxW,eff){
   var yEnd=y+(L.length-1)*lh;
   if(eff){
     var items=Array.isArray(eff)?eff:eff===true?effBits(ui.rp):[[eff,[effData().f,effData().m,effData().t]]];
-    items.forEach(function(it){
-      var seg=[[it[0]+' : ',false],['F : '+it[1][0],true],['    ',false],['G : '+it[1][1],false],['    ',false],['T : '+it[1][2],false]],tw=0;
-      seg.forEach(function(a){tw+=doc.getTextWidth(pdfText(a[0]))});
-      var sx=cx-tw/2;yEnd+=lh;
-      seg.forEach(function(a){var t=pdfText(a[0]);if(a[1])doc.setTextColor(196,48,43);else doc.setTextColor(20);doc.text(t,sx,yEnd);sx+=doc.getTextWidth(t)});
-    });
-    doc.setTextColor(20);
+    yEnd=drawEffTable(doc,M,yEnd+lh+1,items,lh);
   }
   var R=['BURKINA FASO'].concat(wrapT(doc,'La Patrie ou la Mort, nous Vaincrons',rw),[pdfText('Année scolaire : '+sc.year)]);
   R.forEach(function(t,i){doc.text(fit(doc,t,rw),rx,y+i*lh,{align:'center'})});
@@ -762,10 +772,10 @@ function drawBulletin(doc,r,C,p){
   var kv=function(x,yy,k,v,red,mw){doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text(k+' ',x,yy);var w=doc.getTextWidth(k+' ');doc.setFont('helvetica','normal');tc(red&&girl);doc.text(fit(doc,pdfText(v),(mw||(W-M-x))-w),x+w,yy);tc(false)};
   var RX=112,eb=effBits(p);
   y+=9;kv(M,y,'Élève :',r.s.name,true,RX-M-4);kv(RX,y,'Classe :',sc.classe||'-');
-  y+=7;kv(M,y,'Sexe :',sexLabel(r.s.sex),true);drawFGT(doc,RX,y,eb[0][0],eb[0][1]);
-  y+=7;kv(M,y,'Âge :',isNum(r.s.age)?r.s.age+' ans':'-',true);drawFGT(doc,RX,y,eb[1][0],eb[1][1]);
-  y+=7;drawFGT(doc,RX,y,eb[2][0],eb[2][1]);
-  y+=7;
+  y+=7;kv(M,y,'Sexe :',sexLabel(r.s.sex),true);
+  y+=7;kv(M,y,'Âge :',isNum(r.s.age)?r.s.age+' ans':'-',true);
+  y+=7;drawEffTable(doc,M,y,eb,6);
+  y+=18;
   var cols=[['Discipline',68,'l'],['Note',30,'c'],['Sur',30,'c'],['Appréciation',52,'l']];
   var n=r.items.length, rh=Math.max(5.8,Math.min(8,70/(n+2))), fs=12;
   var drawRow=function(cells,bold,fill){
@@ -864,13 +874,13 @@ function doRestore(file){
 document.addEventListener('change',function(e){if(e.target&&e.target.id==='restoreFile'&&S){doRestore(e.target.files&&e.target.files[0])}});
 function pdfOne(){
   var C=compute(ui.rp),r=C.rows.filter(function(x){return x.s.id===ui.bs})[0];
-  savePdf(function(K){var doc=new K({unit:'mm',format:'a4'});drawBulletin(doc,r,C,ui.rp);return doc},'bulletin-'+(ui.rp==='A'?'annee':'t'+ui.rp)+'-'+slug(r.s.name)+'.pdf');
+  savePdf(function(K){var doc=new K({unit:'mm',format:'a4'});drawBulletin(doc,r,C,ui.rp);return doc},pdfName('BULLETIN DE NOTES '+String(r.s.name).toUpperCase(),true));
 }
 function pdfAll(){
   var C=compute(ui.rp),order=sortedStudents();
   savePdf(function(K){var doc=new K({unit:'mm',format:'a4'});
     order.forEach(function(s,i){if(i)doc.addPage();drawBulletin(doc,C.rows.filter(function(x){return x.s.id===s.id})[0],C,ui.rp)});return doc},
-    'bulletins-'+(ui.rp==='A'?'annee':'t'+ui.rp)+'-'+slug(S.school.classe||'classe')+'.pdf');
+    pdfName('BULLETINS DE NOTES',true));
 }
 function buildSucc(K){
   var R=successStats(ui.rp),doc=new K({unit:'mm',format:'a4',orientation:'landscape'}),M=12,W=297,rh=7,y=0;
@@ -902,8 +912,8 @@ function buildSucc(K){
   drawSigs(doc,y+6,W,M);
   return doc;
 }
-function pdfSucc(){savePdf(buildSucc,'taux-reussite-'+(ui.rp==='A'?'annee':'t'+ui.rp)+'-'+slug(S.school.classe||'classe')+'.pdf')}
-function pdfBilan(){savePdf(buildBilan,'propositions-fin-annee-'+slug(S.school.classe||'classe')+'.pdf')}
+function pdfSucc(){savePdf(buildSucc,pdfName('TAUX DE RÉUSSITE PAR DISCIPLINE',true))}
+function pdfBilan(){savePdf(buildBilan,pdfName("PROPOSITIONS DE FIN D'ANNÉE",false))}
 function buildBilan(K){
   var D=bilanData(),doc=new K({unit:'mm',format:'a4',orientation:'landscape'}),M=12,W=297,rh=7,y=0;
   doc.setFont('helvetica','bold');doc.setFontSize(12);
@@ -965,7 +975,7 @@ function buildBilan(K){
   });
   return doc;
 }
-function pdfRank(){savePdf(buildRank,'classement-'+(ui.rp==='A'?'annee':'t'+ui.rp)+'-'+slug(S.school.classe||'classe')+'.pdf')}
+function pdfRank(){savePdf(buildRank,pdfName('CLASSEMENT',true))}
 function buildRank(K){
   var C=compute(ui.rp),doc=new K({unit:'mm',format:'a4',orientation:'landscape'});
   var rows=C.rows.slice().sort(function(a,b){return ((a.rank==null)-(b.rank==null))||(a.rank-b.rank)||a.s.name.localeCompare(b.s.name,'fr')});
